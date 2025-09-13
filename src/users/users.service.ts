@@ -13,6 +13,8 @@ import { Messages } from '../common/messages';
 
 
 @Injectable()
+console.log("hello");
+
 export class UsersService {
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
