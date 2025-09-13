@@ -13,7 +13,6 @@ import { Messages } from '../common/messages';
 
 
 @Injectable()
-console.log("hello");
 
 export class UsersService {
     constructor(
