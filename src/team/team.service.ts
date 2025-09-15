@@ -1,12 +1,13 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Team, TeamDocument } from './entities/team.entity';
 import { isValidObjectId, Model } from 'mongoose';
-import { EventDocument } from 'src/event/entities/event.entity';
+import { EventDocument, Event } from 'src/event/entities/event.entity';
 import { Player, PlayerDocument } from 'src/players/entities/player.entity';
 import { Types } from 'mongoose';
+import { Messages } from 'src/common/messages';
 
 @Injectable()
 export class TeamService {
@@ -16,61 +17,18 @@ export class TeamService {
     @InjectModel(Player.name) private readonly playerModel: Model<PlayerDocument>,
   ) { }
 
-  // async create(createTeamDto: CreateTeamDto) {
-
-  //   if (!isValidObjectId(createTeamDto.eventId)) {
-  //     throw new BadRequestException("Invalid Event ID")
-  //   }
-
-  //   const event = await this.eventModel.findById(createTeamDto.eventId);
-  //   if (!event) {
-  //     throw new NotFoundException("Event is not found");
-  //   }
-
-  //   const players = await this.playerModel.find({
-  //     _id: { $in: createTeamDto.players }
-  //   });
-
-  //   for (const player of players) {
-
-  //     const EventList = event.playerlist.some(p => p._id === player._id);
-
-  //     if (!EventList) {
-  //       throw new BadRequestException(`Player ${player} is not part of the event`);
-  //     }
-  //   }
-
-  //   if (players.length !== 10) {
-  //     throw new BadRequestException("Add 10 player ")
-  //   }
-
-  //   const malePlayer = players.filter(player => player.gender === "male").length;
-  //   const femalePlayer = players.filter(player => player.gender === "female").length;
-
-  //   if (malePlayer !== 5 || femalePlayer !== 5) {
-  //     throw new BadRequestException("select 5 male and 5 female")
-  //   }
-
-
-  //   // const creatTeam = await this.teamModel.create({
-  //   //   ...createTeamDto, players: ...teamPlayer
-  //   // })
-  //   const newTeam = new this.teamModel({
-  //     name: createTeamDto.name,
-  //     players: players,
-  //     event: createTeamDto.eventId
-  //   });
-  //   return await newTeam;
-  //   // return creatTeam;
-
-  // }
   async create(createTeamDto: CreateTeamDto) {
     if (!isValidObjectId(createTeamDto.eventId)) {
-      throw new BadRequestException("Invalid Event ID");
+      throw new BadRequestException(Messages.TEAM.CREATE_INVALID_EVENT_ID);
     }
 
     const event = await this.eventModel.findById(createTeamDto.eventId);
-    if (!event) throw new NotFoundException("Event is not found");
+    if (!event) throw new NotFoundException(Messages.TEAM.CREATE_EVENT_NOT_FOUND);
+
+    const now = Date.now();
+    if (event.starttime <= now) {
+      throw new BadRequestException(Messages.TEAM.CREATE_EVENT_STARTED);
+    }
 
     const players = await this.playerModel.find({
       _id: { $in: createTeamDto.players }
@@ -79,6 +37,7 @@ export class TeamService {
     for (const player of players) {
       const playerId = player._id as Types.ObjectId;
       const isInEvent = event.playerlist.some(id => id.toString() === playerId.toString());
+
 
       if (!isInEvent) {
         throw new BadRequestException(`Player ${player.name} is not part of the event`);
@@ -93,7 +52,7 @@ export class TeamService {
     const femaleCount = players.filter(p => p.gender === "female").length;
 
     if (maleCount !== 5 || femaleCount !== 5) {
-      throw new BadRequestException("Select 5 male and 5 female players");
+      throw new BadRequestException(Messages.TEAM.CREATE_GENDER_DISTRIBUTION_INVALID);
     }
 
     const newTeam = new this.teamModel({
@@ -103,22 +62,147 @@ export class TeamService {
       players: players.map(p => p._id),
     });
 
-    return await newTeam.save();
+    return {
+      HttpStatus: HttpStatus.CREATED,
+      message: Messages.TEAM.CREATE_SUCCESS,
+      data: await newTeam.save(),
+    };
   }
 
-  findAll() {
-    return `This action returns all team`;
+  async findAll() {
+    try {
+      const teams = await this.teamModel.find().populate('players').exec();
+
+
+      if (!teams || teams.length === 0) {
+        throw new NotFoundException(Messages.TEAM.FIND_NOT_FOUND);
+      }
+
+      return {
+        HttpStatus: HttpStatus.OK,
+        message: Messages.TEAM.FETCH_SUCCESS,
+        data: teams
+      };
+
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} team`;
+  async findOne(id: string) {
+    try {
+
+      if (!isValidObjectId(id)) {
+        throw new BadRequestException(Messages.TEAM.INVALID_TEAM_ID);
+      }
+      const team = await this.teamModel.findById(id);
+
+      if (!team) {
+        throw new NotFoundException(Messages.TEAM.FIND_NOT_FOUND);
+      }
+
+      return {
+        HttpStatus: HttpStatus.OK,
+        message: Messages.TEAM.FETCH_ONE_SUCCESS,
+        data: team
+      };
+
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
+    }
   }
 
-  update(id: number, updateTeamDto: UpdateTeamDto) {
-    return `This action updates a #${id} team`;
+  async remove(id: string) {
+    try {
+      if (!isValidObjectId(id)) {
+        throw new BadRequestException(Messages.TEAM.INVALID_TEAM_ID);
+      }
+      const team = await this.teamModel.findById(id);
+
+      if (!team) {
+        throw new NotFoundException("Team is not found")
+      }
+
+      await this.teamModel.findByIdAndDelete(id);
+
+      return {
+        HttpStatus: HttpStatus.OK,
+        message: Messages.TEAM.REMOVE_SUCCESS,
+        data: team,
+      };
+
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} team`;
+  async update(teamId: string, updateTeamDto: UpdateTeamDto) {
+    try {
+
+      if (!isValidObjectId(teamId)) {
+        throw new BadRequestException(Messages.TEAM.INVALID_TEAM_ID);
+      }
+      const team = await this.teamModel.findById(teamId);
+
+      if (!team) {
+        throw new NotFoundException(Messages.TEAM.FIND_NOT_FOUND)
+      }
+      const event = await this.eventModel.findById(updateTeamDto.eventId);
+
+      if (!event) {
+        throw new NotFoundException(Messages.TEAM.CREATE_EVENT_NOT_FOUND);
+      }
+
+      const now = Date.now();
+      const oneHour = 60 * 60 * 1000;
+
+      if (event.starttime - now <= oneHour) {
+        throw new BadRequestException(Messages.TEAM.CANNOT_UPDATE_ONE_HOUR_BEFORE_EVENT);
+      }
+
+      if (updateTeamDto.players && updateTeamDto.players.length > 0) {
+        const players = await this.playerModel.find({
+          _id: { $in: updateTeamDto.players }
+        });
+
+        if (players.length !== 10) {
+          throw new BadRequestException(Messages.TEAM.CREATE_PLAYER_COUNT_INVALID);
+        }
+
+        const maleCount = players.filter(p => p.gender === "male").length;
+        const femaleCount = players.filter(p => p.gender === "female").length;
+
+        if (maleCount !== 5 || femaleCount !== 5) {
+          throw new BadRequestException(Messages.TEAM.CREATE_GENDER_DISTRIBUTION_INVALID);
+        }
+
+        for (const player of players) {
+
+          const playerId = player._id as Types.ObjectId;
+          const isInEvent = event.playerlist.some(id => id.toString() === playerId.toString());
+
+          if (!isInEvent) {
+            throw new BadRequestException(`Player ${player.name} is not part of the event`);
+          }
+        }
+
+        team.players = players.map(p => p._id as Types.ObjectId) as Types.ObjectId[];
+      }
+
+      if (updateTeamDto.name) {
+        team.name = updateTeamDto.name;
+      }
+
+      await team.save();
+
+      return {
+        HttpStatus: HttpStatus.OK,
+        message: Messages.TEAM.UPDATE_SUCCESS,
+        data: team,
+      };
+
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
+    }
   }
 }

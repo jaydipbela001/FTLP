@@ -25,8 +25,11 @@ export class Player {
     @Prop({ type: Date, required: true })
     dob: Date
 
-    @Prop({ type: String, required: true })
+    @Prop({ type: String, required: true, lowercase: true })
     gender: string
+
+    @Prop({ type: Number, default: null })
+    point: number
 }
 
 export type PlayerDocument = Player & Document

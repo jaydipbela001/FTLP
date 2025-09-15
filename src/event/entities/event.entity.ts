@@ -17,8 +17,8 @@ export class Event {
     @Prop({ type: Number })
     startdate: number
 
-    // @Prop({ type: [mongoose.Schema.ObjectId], default: [], ref: 'Player' })
-    // playerlist: mongoose.Types.ObjectId[]
+    @Prop({ type: Number })
+    starttime: number
 
     @Prop({ type: [mongoose.Schema.ObjectId], default: [], ref: 'Player' })
     playerlist: Types.ObjectId[]

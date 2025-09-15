@@ -10,21 +10,34 @@ export class CreateTeamDto {
     @IsString()
     name: string;
 
-    @ApiProperty({ example: '68c41a29993d76a1064aaf16' })
+    @ApiProperty({ example: '68c7d228b255a4bfdbf9397d' })
     @IsNotEmpty({ message: 'EventId is required' })
     @IsString()
     eventId: string;
 
-    @ApiProperty({ example: '68c2bc1b14fc5e0f77397cec' })
+    @ApiProperty({ example: '68c56c0217d69e09351f4b13' })
     @IsNotEmpty({ message: 'UserId is required' })
     @IsString()
     userId: string;
 
-    @ApiProperty({ example: ['68c3f6ecad75339f1464cd41', '68c3f70aad75339f1464cd43', '68c3f770ad75339f1464cd49', '68c3f784ad75339f1464cd4b', '68c3f78dad75339f1464cd4d', '68c3f735ad75339f1464cd45', '68c3f758ad75339f1464cd47', '68c3f7cead75339f1464cd51', '68c3f7dead75339f1464cd53', '68c3f7f3ad75339f1464cd55'] })
+    @ApiProperty({
+        example: [
+            '68c7b707adaee17755fda55a',
+            '68c7d022200a69b56ab10448',
+            '68c7d032200a69b56ab1044a',
+            '68c7d038200a69b56ab1044c',
+            '68c7d03f200a69b56ab1044e',
+            '68c7d072200a69b56ab10456',
+            '68c7d118200a69b56ab10458',
+            '68c7d121200a69b56ab1045a',
+            '68c7d131200a69b56ab1045c',
+            '68c7d14a200a69b56ab1045e'
+        ],
+    })
     @IsArray()
     @ArrayNotEmpty()
-    // @ArrayMinSize(10)
-    // @ArrayMaxSize(10)
+    @ArrayMinSize(10)
+    @ArrayMaxSize(10)
     @IsString({ each: true })
     players: string[];
 }

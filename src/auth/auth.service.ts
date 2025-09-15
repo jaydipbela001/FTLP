@@ -53,7 +53,35 @@ export class AuthService {
     }
   }
 
-  async verifyOtp(verifyOtpDto: VerifyOtpDto): Promise<{ HttpStatus: number; message: string; token: string }> {
+  async login(createUserDto: CreateUserDto) {
+    try {
+      const { email, password } = createUserDto;
+      const user = await this.useModel.findOne({ email });
+
+      if (!user) {
+        throw new NotFoundException(Messages.USER.NOT_FOUND);
+      }
+
+      const match = await bcrypt.compare(password, user.password);
+
+      if (!match) {
+        throw new BadRequestException(Messages.AUTH.PASSWORD_INCORRECT);
+      }
+
+      const token = generateJwtToken(user.id, user.role);
+
+      return {
+        HttpStatus: HttpStatus.OK,
+        message: Messages.AUTH.LOGIN_SUCCESS,
+        data: user,
+        token,
+      };
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async verifyOtp(verifyOtpDto: VerifyOtpDto) {
     try {
       const user = await this.useModel.findOne({ email: verifyOtpDto.email });
 
@@ -90,7 +118,7 @@ export class AuthService {
     }
   }
 
-  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{ HttpStatus: number; message: string; otp: number }> {
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     try {
       const user = await this.useModel.findOne({ email: forgotPasswordDto.email });
 
@@ -119,7 +147,7 @@ export class AuthService {
     }
   }
 
-  async resendOtp(forgotPasswordDto: ForgotPasswordDto): Promise<{ HttpStatus: number; message: string; otp: number }> {
+  async resendOtp(forgotPasswordDto: ForgotPasswordDto) {
     try {
       const user = await this.useModel.findOne({ email: forgotPasswordDto.email });
 
@@ -147,7 +175,7 @@ export class AuthService {
     }
   }
 
-  async resetPassword(resetPasswordDto: ResetPasswordDto, otpToken: string): Promise<{ HttpStatus: number; message: string; }> {
+  async resetPassword(resetPasswordDto: ResetPasswordDto, otpToken: string) {
     try {
       const user = await this.useModel.findOne({ email: resetPasswordDto.email });
 
@@ -182,31 +210,4 @@ export class AuthService {
     }
   }
 
-  async login(createUserDto: CreateUserDto): Promise<{ data: UserDocument, HttpStatus: number; message: string; token: string }> {
-    try {
-      const { email, password } = createUserDto;
-      const user = await this.useModel.findOne({ email });
-
-      if (!user) {
-        throw new NotFoundException(Messages.USER.NOT_FOUND);
-      }
-
-      const match = await bcrypt.compare(password, user.password);
-
-      if (!match) {
-        throw new BadRequestException(Messages.AUTH.PASSWORD_INCORRECT);
-      }
-
-      const token = generateJwtToken(user.id, user.role);
-
-      return {
-        HttpStatus: HttpStatus.OK,
-        message: Messages.AUTH.LOGIN_SUCCESS,
-        data: user,
-        token,
-      };
-    } catch (error) {
-      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
-    }
-  }
 }

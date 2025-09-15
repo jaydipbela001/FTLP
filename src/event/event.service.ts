@@ -1,4 +1,4 @@
-import { Injectable, HttpStatus, HttpException, BadRequestException, NotFoundException, BadGatewayException, ConflictException } from '@nestjs/common';
+import { Injectable, HttpStatus, HttpException, BadRequestException, NotFoundException, BadGatewayException } from '@nestjs/common';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -7,45 +7,47 @@ import { EventDocument } from './entities/event.entity';
 import { dateToMilliseconds, timeToseconds } from 'src/common/utils';
 import { AddPlayerDto } from './dto/add-player.dto';
 import { Player, PlayerDocument } from 'src/players/entities/player.entity';
-import { PipelineStage } from 'mongoose';
+import { Messages } from 'src/common/messages';
 
 @Injectable()
 export class EventService {
-  constructor(@InjectModel(Event.name) private readonly eventModel: Model<EventDocument>,
+  constructor(
+    @InjectModel(Event.name) private readonly eventModel: Model<EventDocument>,
     @InjectModel(Player.name) private readonly playerModel: Model<PlayerDocument>
   ) { }
 
-
   async create(createEventDto: CreateEventDto) {
     try {
-
-      const eventTitle = await this.eventModel.findOne({ title: createEventDto.title })
+      const eventTitle = await this.eventModel.findOne({ title: createEventDto.title });
 
       if (eventTitle) {
-        throw new BadGatewayException("Event Title is aelredy exsit")
+        throw new BadGatewayException(Messages.EVENT.CREATE_TITLE_EXISTS);
       }
 
       const startDate = dateToMilliseconds(createEventDto.startdate);
-      const runtime = timeToseconds(createEventDto.runtime)
-      const biketime = timeToseconds(createEventDto.biketime)
-      const swimtime = timeToseconds(createEventDto.swimtime)
+      const runtime = timeToseconds(createEventDto.runtime);
+      const biketime = timeToseconds(createEventDto.biketime);
+      const swimtime = timeToseconds(createEventDto.swimtime);
+      const now = Date.now();
+
+      if (createEventDto.starttime <= now) {
+        throw new BadRequestException(Messages.EVENT.CREATE_STARTTIME_INVALID);
+      }
 
       const event = await this.eventModel.create({
         ...createEventDto,
         startdate: startDate,
-        runtime: runtime,
-        biketime: biketime,
-        swimtime: swimtime
-      })
+        runtime,
+        biketime,
+        swimtime
+      });
 
       return {
         HttpStatus: HttpStatus.CREATED,
-        message: "Event create successfuly",
+        message: Messages.EVENT.CREATE_SUCCESS,
         data: event,
       };
-
     } catch (error) {
-
       throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
     }
   }
@@ -53,6 +55,7 @@ export class EventService {
   async findAll(page: number, limit: number, filter: string) {
     try {
       const skip = (Math.max(page, 1) - 1) * limit;
+
       const pipeline = [
         {
           $lookup: {
@@ -78,6 +81,7 @@ export class EventService {
             title: { $first: "$title" },
             location: { $first: "$location" },
             startdate: { $first: "$startdate" },
+            starttime: { $first: "$starttime" },
             runkm: { $first: "$runkm" },
             bikekm: { $first: "$bikekm" },
             swimkm: { $first: "$swimkm" },
@@ -94,11 +98,18 @@ export class EventService {
           }
         }
       ];
+
       const result = await this.eventModel.aggregate(pipeline);
       const metadata = result[0].metadata[0] || { total: 0 };
       const data = result[0].data;
+
+      if (!data || data.length === 0) {
+        throw new NotFoundException(Messages.EVENT.NOT_FOUND);
+      }
+
       return {
         HttpStatus: HttpStatus.OK,
+        message: Messages.EVENT.FETCH_LIST_SUCCESS,
         data,
         total: metadata.total,
         page,
@@ -110,14 +121,13 @@ export class EventService {
     }
   }
 
-
   async getPlayerListByEventId(eventId: string, page: number, limit: number) {
     const skip = (Math.max(page, 1) - 1) * limit;
 
     const event = await this.eventModel.findById(eventId).exec();
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException(Messages.EVENT.NOT_FOUND);
     }
 
     const [data, total] = await Promise.all([
@@ -125,28 +135,33 @@ export class EventService {
       this.playerModel.countDocuments({ _id: { $in: event.playerlist } })
     ]);
 
+    if (!data || data.length === 0) {
+      throw new NotFoundException(Messages.EVENT.NOT_FOUND);
+    }
+
     return {
       HttpStatus: HttpStatus.OK,
+      message: Messages.EVENT.FETCH_SUCCESS,
       data,
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
     };
-
   }
 
   async addPlayer(eventId: string, addPlayerDto: AddPlayerDto) {
     try {
       if (!isValidObjectId(eventId)) {
-        throw new BadRequestException("Invalid event ID.");
+        throw new BadRequestException(Messages.EVENT.NOT_FOUND);
       }
 
       const event = await this.eventModel.findById(eventId);
 
       if (!event) {
-        throw new NotFoundException("Event not found");
+        throw new NotFoundException(Messages.EVENT.NOT_FOUND);
       }
+
       if (addPlayerDto.playerIds) {
         await this.addPlayerList(event, addPlayerDto.playerIds);
       }
@@ -155,7 +170,7 @@ export class EventService {
 
       return {
         HttpStatus: HttpStatus.OK,
-        message: "Players added successfully",
+        message: Messages.EVENT.PLAYERS_ADDED_SUCCESS,
         data,
       };
     } catch (error) {
@@ -163,25 +178,23 @@ export class EventService {
     }
   }
 
-
   async findOne(id: string) {
     try {
       if (!isValidObjectId(id)) {
-        throw new BadRequestException('Invalid event ID.');
+        throw new BadRequestException(Messages.EVENT.NOT_FOUND);
       }
 
       const event = await this.eventModel.findById(id);
 
       if (!event) {
-        throw new NotFoundException("Event is not found");
+        throw new NotFoundException(Messages.EVENT.NOT_FOUND);
       }
 
       return {
         HttpStatus: HttpStatus.OK,
-        message: "Event information received successfully.",
+        message: Messages.EVENT.FETCH_SUCCESS,
         data: event,
       };
-
     } catch (error) {
       throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
     }
@@ -190,31 +203,33 @@ export class EventService {
   async update(id: string, updateEventDto: UpdateEventDto) {
     try {
       if (!isValidObjectId(id)) {
-        throw new BadRequestException("Invalid event ID.");
+        throw new BadRequestException(Messages.EVENT.NOT_FOUND);
       }
 
       const event = await this.eventModel.findById(id);
 
       if (!event) {
-        throw new NotFoundException("Event not found");
+        throw new NotFoundException(Messages.EVENT.NOT_FOUND);
+      }
+
+      const now = Date.now();
+      if (updateEventDto.starttime && updateEventDto.starttime <= now) {
+        throw new BadRequestException(Messages.EVENT.CREATE_STARTTIME_INVALID);
       }
 
       if (updateEventDto.playerlist) {
         await this.addPlayerList(event, updateEventDto.playerlist);
       }
-      // Object.assign(event, updateEventDto);
-
-      // const updateEvent = await event.save();
 
       const updateEvent = await this.eventModel.findByIdAndUpdate(id, updateEventDto, { new: true });
 
       if (!updateEvent) {
-        throw new BadRequestException("Event update fail")
+        throw new BadRequestException(Messages.EVENT.UPDATE_FAIL);
       }
 
       return {
         HttpStatus: HttpStatus.OK,
-        message: "Event updated successfully",
+        message: Messages.EVENT.UPDATE_SUCCESS,
         updateEvent,
       };
     } catch (error) {
@@ -225,30 +240,28 @@ export class EventService {
   async remove(id: string) {
     try {
       if (!isValidObjectId(id)) {
-        throw new BadRequestException('Invalid event ID.');
+        throw new BadRequestException(Messages.EVENT.NOT_FOUND);
       }
 
       const event = await this.eventModel.findById(id);
 
       if (!event) {
-        throw new NotFoundException("Event is not found");
+        throw new NotFoundException(Messages.EVENT.NOT_FOUND);
       }
 
       await this.eventModel.findByIdAndDelete(id);
 
       return {
         HttpStatus: HttpStatus.OK,
-        message: "Event delete successfuly",
+        message: Messages.EVENT.DELETE_SUCCESS,
         data: event,
       };
-
     } catch (error) {
-      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST)
+      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
     }
-
   }
 
-  private async addPlayerList(event: EventDocument, playerIds: string[],) {
+  private async addPlayerList(event: EventDocument, playerIds: string[]) {
     const playerObjectIds: Types.ObjectId[] = [];
 
     for (const playerId of playerIds) {
@@ -260,8 +273,5 @@ export class EventService {
     }
 
     event.playerlist = playerObjectIds;
-
-  };
-
-
+  }
 }

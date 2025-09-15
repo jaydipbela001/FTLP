@@ -44,6 +44,7 @@ export class CreatePlayerDto {
     @IsOptional()
     profileImage: string;
 
+
     @ApiProperty({ example: 'Gujarat' })
     @IsNotEmpty({ message: Messages.PLAYER.STATE_REQUIRED })
     @IsString()

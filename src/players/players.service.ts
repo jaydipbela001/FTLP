@@ -13,11 +13,17 @@ export class PlayersService {
   async create(createPlayerDto: CreatePlayerDto, file: Express.Multer.File) {
     try {
 
+      const now = new Date();
+
+      if (createPlayerDto.dob >= now) {
+        throw new BadRequestException(Messages.PLAYER.DATE_OF_BIRTH);
+      }
       if (!file) {
         throw new BadRequestException(Messages.PLAYER.PROFILE_IMAGE_REQUIRED);
       }
 
       createPlayerDto.profileImage = `/uploads/${file.filename}`;
+
 
       const player = await this.playerModel.create(createPlayerDto);
 
@@ -44,6 +50,9 @@ export class PlayersService {
         this.playerModel.countDocuments()
       ]);
 
+      if (!data || data.length === 0) {
+        throw new NotFoundException(Messages.PLAYER.NOT_FOUND)
+      }
       return {
         HttpStatus: HttpStatus.OK,
         message: Messages.PLAYER.FETCH_SUCCESS,
@@ -61,6 +70,7 @@ export class PlayersService {
   async findOne(id: string) {
     try {
       if (!isValidObjectId(id)) {
+
         throw new BadRequestException(Messages.PLAYER.INVALID_ID);
       }
 
@@ -84,6 +94,7 @@ export class PlayersService {
   async update(id: string, updatePlayerDto: UpdatePlayerDto, file: Express.Multer.File) {
     try {
       if (!isValidObjectId(id)) {
+
         throw new BadRequestException(Messages.PLAYER.INVALID_ID);
       }
 
@@ -129,7 +140,6 @@ export class PlayersService {
       }
 
       await this.playerModel.findByIdAndDelete(id);
-
       return {
         HttpStatus: HttpStatus.OK,
         message: Messages.PLAYER.DELETE_SUCCESS,
@@ -140,4 +150,33 @@ export class PlayersService {
       throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
     }
   }
+
+
+  async playerPoint(page: number, limit: number) {
+    try {
+      const skip = (Math.max(page, 1) - 1) * limit;
+      const [data, total] = await Promise.all([
+        this.playerModel.find().select('name point').sort({ point: -1 }).skip(skip).limit(limit),
+        this.playerModel.countDocuments()
+      ]);
+
+      if (!data || data.length === 0) {
+        throw new NotFoundException(Messages.PLAYER.NOT_FOUND)
+      }
+
+      // const totals = total - 3
+      return {
+        HttpStatus: HttpStatus.OK,
+        message: Messages.PLAYER.FETCH_POINT,
+        data,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      };
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
+    }
+  }
+
 }

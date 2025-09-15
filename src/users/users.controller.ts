@@ -8,25 +8,25 @@ import { multerCategoryImageOptions } from 'src/service/multer..service';
 import { RolesGuard } from 'src/auth/lib/roles.guard';
 import { Roles } from 'src/auth/decorator/roles.decorator';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+// @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   @Get()
-  @Roles("admin")
+  // @Roles("admin")
   findAll() {
     return this.usersService.findAll();
   }
 
   @Get(':id')
-  @Roles("admin", "user")
+  // @Roles("admin", "user")
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
   @Put(':id')
-  @Roles("user", "admin")
+  // @Roles("user", "admin")
   @UseInterceptors(FileInterceptor('profileImage', multerCategoryImageOptions))
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UpdateUserDto })
@@ -39,7 +39,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @Roles("user", "admin")
+  // @Roles("user", "admin")
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }

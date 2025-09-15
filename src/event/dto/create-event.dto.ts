@@ -21,11 +21,16 @@ export class CreateEventDto {
     @IsString()
     location: string;
 
-    @ApiProperty({ example: '2004/08/15' })
+    @ApiProperty({ example: '2025/090/15' })
     @IsNotEmpty({ message: 'startDate is required' })
     @IsDate({ message: Messages.USER.AGE_INVALID })
     @Type(() => Date)
     startdate: Date;
+
+    @ApiProperty({ example: 1757939400000 })
+    @IsNotEmpty({ message: 'starttime is required' })
+    @Type(() => Number)
+    starttime: number;
 
     @ApiProperty({ example: 15 })
     @IsNotEmpty({ message: 'runkm is required' })

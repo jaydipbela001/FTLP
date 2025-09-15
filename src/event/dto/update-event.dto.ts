@@ -26,11 +26,16 @@ export class UpdateEventDto {
     @IsString()
     location?: string;
 
-    @ApiPropertyOptional({ example: '2004/08/15' })
+    @ApiPropertyOptional({ example: '2025/09/15' })
     @IsOptional()
     @IsDate({ message: Messages.USER.AGE_INVALID })
     @Type(() => Date)
     startdate?: Date;
+
+    @ApiPropertyOptional({ example: 1757939400000 })
+    @IsOptional()
+    @Type(() => Number)
+    starttime?: number;
 
     @ApiPropertyOptional({ example: 15 })
     @IsOptional()

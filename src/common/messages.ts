@@ -53,13 +53,43 @@ export const Messages = {
         CREATE_SUCCESS: "Player successfully created.",
         CREATE_FAIL: "Player create fail.",
         FETCH_SUCCESS: "Players received successfully.",
+        FETCH_POINT: "Players point received successfully.",
         FETCH_ONE_SUCCESS: "Player information received successfully.",
         UPDATE_SUCCESS: "Player successfully updated.",
         UPDATE_FAIL: "Player updated fail.",
         DELETE_SUCCESS: "Player successfully deleted.",
         NOT_FOUND: "Player is not found.",
         INVALID_ID: "Invalid player ID.",
-        PROFILE_IMAGE_REQUIRED: "Profile image is required."
+        PROFILE_IMAGE_REQUIRED: "Profile image is required.",
+        DATE_OF_BIRTH: "Date of birth cannot be in the future."
+    },
+    EVENT: {
+        CREATE_SUCCESS: "Event created successfully.",
+        CREATE_TITLE_EXISTS: "Event title already exists.",
+        CREATE_STARTTIME_INVALID: "Event start time must be in the future.",
+        FETCH_SUCCESS: "Event information received successfully.",
+        FETCH_LIST_SUCCESS: "Events received successfully.",
+        NOT_FOUND: "Event not found.",
+        UPDATE_SUCCESS: "Event updated successfully.",
+        UPDATE_FAIL: "Event update failed.",
+        DELETE_SUCCESS: "Event deleted successfully.",
+        PLAYERS_ADDED_SUCCESS: "Players added successfully.",
+    },
+    TEAM: {
+        CREATE_SUCCESS: "Team created successfully.",
+        CREATE_INVALID_EVENT_ID: "Invalid Event ID.",
+        CREATE_EVENT_NOT_FOUND: "Event not found.",
+        CREATE_EVENT_STARTED: "Cannot create team after event start time.",
+        CREATE_PLAYER_NOT_IN_EVENT: "Player {playerName} is not part of the event.",
+        CREATE_PLAYER_COUNT_INVALID: "Team must have exactly 10 players.",
+        CREATE_GENDER_DISTRIBUTION_INVALID: "Team must consist of 5 male and 5 female players.",
+        FIND_NOT_FOUND: "Team not found.",
+        FETCH_SUCCESS: "Teams received successfully.",
+        FETCH_ONE_SUCCESS: "Team information received successfully.",
+        UPDATE_SUCCESS: "Team updated successfully.",
+        REMOVE_SUCCESS: "Team deleted successfully.",
+        INVALID_TEAM_ID: "Invalid Team ID.",
+        CANNOT_UPDATE_ONE_HOUR_BEFORE_EVENT: "Cannot update team within 1 hour of event start."
     }
 
 };
