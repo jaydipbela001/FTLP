@@ -181,10 +181,10 @@ export class EventService {
   async findOne(id: string) {
     try {
       if (!isValidObjectId(id)) {
-        throw new BadRequestException(Messages.EVENT.NOT_FOUND);
+        throw new BadRequestException(Messages.EVENT.INVALID_ID);
       }
 
-      const event = await this.eventModel.findById(id);
+      const event = await this.eventModel.findById(id).populate("playerlist");
 
       if (!event) {
         throw new NotFoundException(Messages.EVENT.NOT_FOUND);
@@ -203,7 +203,7 @@ export class EventService {
   async update(id: string, updateEventDto: UpdateEventDto) {
     try {
       if (!isValidObjectId(id)) {
-        throw new BadRequestException(Messages.EVENT.NOT_FOUND);
+        throw new BadRequestException(Messages.EVENT.INVALID_ID);
       }
 
       const event = await this.eventModel.findById(id);
@@ -240,7 +240,7 @@ export class EventService {
   async remove(id: string) {
     try {
       if (!isValidObjectId(id)) {
-        throw new BadRequestException(Messages.EVENT.NOT_FOUND);
+        throw new BadRequestException(Messages.EVENT.INVALID_ID);
       }
 
       const event = await this.eventModel.findById(id);
@@ -265,6 +265,9 @@ export class EventService {
     const playerObjectIds: Types.ObjectId[] = [];
 
     for (const playerId of playerIds) {
+      if (!isValidObjectId(playerId)) {
+        throw new BadRequestException("Invalid Id");
+      }
       const player = await this.playerModel.findById(playerId);
       if (!player) {
         throw new NotFoundException(`Player with ID ${playerId} not found`);

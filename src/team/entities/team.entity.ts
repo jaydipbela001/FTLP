@@ -5,11 +5,8 @@ import mongoose, { Document, Types } from "mongoose";
 @Schema({ timestamps: true })
 export class Team {
 
-    @Prop({ type: String, required: true })
+    @Prop({ type: String, required: true, unique: true })
     name: string
-
-    // @Prop({ type: [mongoose.Schema.ObjectId], ref: 'Player' })
-    // playes: mongoose.Types.ObjectId[]
 
     @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Player' })
     players: Types.ObjectId[];

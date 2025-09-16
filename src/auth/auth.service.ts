@@ -41,6 +41,9 @@ export class AuthService {
       await newUser.save();
 
       await this.mailservice.sendOtpEmail(newUser.email, newUser.firstname, otp);
+      // const otps = await this.mailservice.sendOtpEmail(newUser.email, newUser.firstname, otp);
+      // console.log("otp", otps);
+
 
       return {
         HttpStatus: HttpStatus.CREATED,

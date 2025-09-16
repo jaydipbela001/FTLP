@@ -8,6 +8,7 @@ import { EventDocument, Event } from 'src/event/entities/event.entity';
 import { Player, PlayerDocument } from 'src/players/entities/player.entity';
 import { Types } from 'mongoose';
 import { Messages } from 'src/common/messages';
+import { User, UserDocument } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class TeamService {
@@ -15,12 +16,23 @@ export class TeamService {
   constructor(@InjectModel(Team.name) private readonly teamModel: Model<TeamDocument>,
     @InjectModel(Event.name) private readonly eventModel: Model<EventDocument>,
     @InjectModel(Player.name) private readonly playerModel: Model<PlayerDocument>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) { }
 
   async create(createTeamDto: CreateTeamDto) {
+
     if (!isValidObjectId(createTeamDto.eventId)) {
       throw new BadRequestException(Messages.TEAM.CREATE_INVALID_EVENT_ID);
     }
+
+    const name = await this.teamModel.findOne({ name: createTeamDto.name });
+
+    if (name) {
+      throw new BadRequestException(Messages.TEAM.CREATE_NAME_EXISTS)
+    }
+
+    const user = await this.userModel.findById(createTeamDto.userId);
+    if (!user) throw new NotFoundException(Messages.TEAM.CREATE_USER_NOT_FOUND);
 
     const event = await this.eventModel.findById(createTeamDto.eventId);
     if (!event) throw new NotFoundException(Messages.TEAM.CREATE_EVENT_NOT_FOUND);
@@ -34,10 +46,10 @@ export class TeamService {
       _id: { $in: createTeamDto.players }
     });
 
+
     for (const player of players) {
       const playerId = player._id as Types.ObjectId;
       const isInEvent = event.playerlist.some(id => id.toString() === playerId.toString());
-
 
       if (!isInEvent) {
         throw new BadRequestException(`Player ${player.name} is not part of the event`);
@@ -71,8 +83,7 @@ export class TeamService {
 
   async findAll() {
     try {
-      const teams = await this.teamModel.find().populate('players').exec();
-
+      const teams = await this.teamModel.find().populate('players').populate("eventId", "-playerlist").populate("userID").exec();
 
       if (!teams || teams.length === 0) {
         throw new NotFoundException(Messages.TEAM.FIND_NOT_FOUND);
@@ -95,7 +106,7 @@ export class TeamService {
       if (!isValidObjectId(id)) {
         throw new BadRequestException(Messages.TEAM.INVALID_TEAM_ID);
       }
-      const team = await this.teamModel.findById(id);
+      const team = await this.teamModel.findById(id).populate("players").populate("eventId", "-playerlist").populate("userID");
 
       if (!team) {
         throw new NotFoundException(Messages.TEAM.FIND_NOT_FOUND);
@@ -112,41 +123,19 @@ export class TeamService {
     }
   }
 
-  async remove(id: string) {
-    try {
-      if (!isValidObjectId(id)) {
-        throw new BadRequestException(Messages.TEAM.INVALID_TEAM_ID);
-      }
-      const team = await this.teamModel.findById(id);
-
-      if (!team) {
-        throw new NotFoundException("Team is not found")
-      }
-
-      await this.teamModel.findByIdAndDelete(id);
-
-      return {
-        HttpStatus: HttpStatus.OK,
-        message: Messages.TEAM.REMOVE_SUCCESS,
-        data: team,
-      };
-
-    } catch (error) {
-      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
-    }
-  }
-
   async update(teamId: string, updateTeamDto: UpdateTeamDto) {
     try {
 
       if (!isValidObjectId(teamId)) {
         throw new BadRequestException(Messages.TEAM.INVALID_TEAM_ID);
       }
+
       const team = await this.teamModel.findById(teamId);
 
       if (!team) {
         throw new NotFoundException(Messages.TEAM.FIND_NOT_FOUND)
       }
+
       const event = await this.eventModel.findById(updateTeamDto.eventId);
 
       if (!event) {
@@ -205,4 +194,30 @@ export class TeamService {
       throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
     }
   }
+
+  async remove(id: string) {
+    try {
+      if (!isValidObjectId(id)) {
+        throw new BadRequestException(Messages.TEAM.INVALID_TEAM_ID);
+      }
+      const team = await this.teamModel.findById(id);
+
+      if (!team) {
+        throw new NotFoundException("Team is not found")
+      }
+
+      await this.teamModel.findByIdAndDelete(id);
+
+      return {
+        HttpStatus: HttpStatus.OK,
+        message: Messages.TEAM.REMOVE_SUCCESS,
+        data: team,
+      };
+
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
+    }
+  }
+
+
 }

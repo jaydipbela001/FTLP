@@ -27,7 +27,7 @@ export const Messages = {
         USERS_FETCHED_SUCCESSFULLY: 'Users received successfully.',
         USER_FETCHED_SUCCESSFULLY: 'User information received successfully.',
         NOT_FOUND: "User not found.",
-        INVALID_ID: "Invalid user ID.",
+        INVALID_ID: "Invalid ID.",
         UPDATE_SUCCESS: "User updated successfully.",
         UPDATE_FAILED: "Failed to update user.",
         DELETE_SUCCESS: "User deleted successfully.",
@@ -64,10 +64,11 @@ export const Messages = {
         DATE_OF_BIRTH: "Date of birth cannot be in the future."
     },
     EVENT: {
+        INVALID_ID: "Invalid ID.",
         CREATE_SUCCESS: "Event created successfully.",
         CREATE_TITLE_EXISTS: "Event title already exists.",
         CREATE_STARTTIME_INVALID: "Event start time must be in the future.",
-        FETCH_SUCCESS: "Event information received successfully.",
+        FETCH_SUCCESS: "Event playerli information received successfully.",
         FETCH_LIST_SUCCESS: "Events received successfully.",
         NOT_FOUND: "Event not found.",
         UPDATE_SUCCESS: "Event updated successfully.",
@@ -79,6 +80,7 @@ export const Messages = {
         CREATE_SUCCESS: "Team created successfully.",
         CREATE_INVALID_EVENT_ID: "Invalid Event ID.",
         CREATE_EVENT_NOT_FOUND: "Event not found.",
+        CREATE_USER_NOT_FOUND: "User not found.",
         CREATE_EVENT_STARTED: "Cannot create team after event start time.",
         CREATE_PLAYER_NOT_IN_EVENT: "Player {playerName} is not part of the event.",
         CREATE_PLAYER_COUNT_INVALID: "Team must have exactly 10 players.",
@@ -89,7 +91,9 @@ export const Messages = {
         UPDATE_SUCCESS: "Team updated successfully.",
         REMOVE_SUCCESS: "Team deleted successfully.",
         INVALID_TEAM_ID: "Invalid Team ID.",
-        CANNOT_UPDATE_ONE_HOUR_BEFORE_EVENT: "Cannot update team within 1 hour of event start."
+        CANNOT_UPDATE_ONE_HOUR_BEFORE_EVENT: "Cannot update team within 1 hour of event start.",
+        CREATE_NAME_EXISTS: "Team name already exists.",
+
     }
 
 };
