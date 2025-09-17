@@ -69,8 +69,8 @@ export class PlayersService {
 
   async findOne(id: string) {
     try {
-      if (!isValidObjectId(id)) {
 
+      if (!isValidObjectId(id)) {
         throw new BadRequestException(Messages.PLAYER.INVALID_ID);
       }
 

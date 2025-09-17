@@ -18,6 +18,11 @@ export class LeaderboardController {
     return this.leaderboardService.getTeamDetail(teamId);
   }
 
+  @Get('teampoint/:eventId')
+  calculateLeaderboard(@Param('eventId') eventId: string) {
+    return this.leaderboardService.calculateLeaderboard(eventId);
+  }
+
   @Post('calculate-point/:playerId')
   async calculatePoint(
     @Param('playerId') playerId: string,

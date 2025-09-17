@@ -1,22 +1,36 @@
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateLeaderboardDto } from './dto/create-leaderboard.dto';
 import { UpdateLeaderboardDto } from './dto/update-leaderboard.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Leaderboard, LeaderboardDocument } from './entities/leaderboard.entity';
-import { Model } from 'mongoose';
+import { isValidObjectId, Model } from 'mongoose';
 import { Team, TeamDocument } from 'src/team/entities/team.entity';
 import { Player, PlayerDocument } from 'src/players/entities/player.entity';
 import { calculatePerformancePoint } from 'src/common/utils';
 import { RacePlayerPointDto } from './dto/race-point.dto';
+import { Event, EventDocument } from 'src/event/entities/event.entity';
 
 @Injectable()
 export class LeaderboardService {
   constructor(@InjectModel(Leaderboard.name) private readonly leaderboardModel: Model<LeaderboardDocument>,
     @InjectModel(Team.name) private readonly teamModel: Model<TeamDocument>,
-    @InjectModel(Player.name) private readonly playerModel: Model<PlayerDocument>) { }
+    @InjectModel(Player.name) private readonly playerModel: Model<PlayerDocument>,
+    @InjectModel(Event.name) private readonly eventModel: Model<EventDocument>,
+  ) { }
 
 
   async calculateLeaderboard(eventId: string) {
+
+    if (!isValidObjectId(eventId)) {
+      throw new BadRequestException("Invalid id");
+    }
+
+    const event = await this.eventModel.findById(eventId);
+
+    if (!event) {
+      throw new NotFoundException("Event is not found");
+    }
+
     const teams = await this.teamModel.find({ eventId }).populate('players');
 
     for (const team of teams) {
@@ -26,7 +40,8 @@ export class LeaderboardService {
       );
 
       team.teampoint = totalPoint;
-      await team.save();
+
+      return await team.save();
     }
   }
 
