@@ -34,7 +34,7 @@ export class PlayersController {
     @Query('limit') limit?: number,
   ) {
     const pageNumber = +(page ?? 1);
-    const limitNumber = +(limit ?? 10);
+    const limitNumber = +(limit ?? 50);
     return this.playersService.findAll(pageNumber, limitNumber);
   }
 

@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PlayersModule } from './players/players.module';
 import { EventModule } from './event/event.module';
 import { TeamModule } from './team/team.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }),
@@ -17,7 +18,7 @@ import { TeamModule } from './team/team.module';
       return connection;
     }
   }
-  ), AuthModule, UsersModule, PlayersModule, EventModule, TeamModule],
+  ), AuthModule, UsersModule, PlayersModule, EventModule, TeamModule, LeaderboardModule],
   controllers: [AppController],
   providers: [AppService],
 })

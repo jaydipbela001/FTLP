@@ -12,11 +12,13 @@ export class Team {
     players: Types.ObjectId[];
 
     @Prop({ type: mongoose.Schema.ObjectId, ref: 'Event' })
-    eventId: Types.ObjectId[];
+    eventId: Types.ObjectId;
 
     @Prop({ type: mongoose.Schema.ObjectId, ref: 'User' })
-    userID: Types.ObjectId[];
+    userID: Types.ObjectId;
 
+    @Prop({ type: Number, default: 0 })
+    teampoint: number
 }
 
 export type TeamDocument = Team & Document

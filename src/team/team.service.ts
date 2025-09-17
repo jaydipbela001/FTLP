@@ -79,6 +79,7 @@ export class TeamService {
       message: Messages.TEAM.CREATE_SUCCESS,
       data: await newTeam.save(),
     };
+
   }
 
   async findAll() {
@@ -203,7 +204,7 @@ export class TeamService {
       const team = await this.teamModel.findById(id);
 
       if (!team) {
-        throw new NotFoundException("Team is not found")
+        throw new NotFoundException("Team is not found");
       }
 
       await this.teamModel.findByIdAndDelete(id);

@@ -26,3 +26,26 @@ export const OTP_FUNCTION = {
     },
 
 }
+
+export function calculatePerformancePoint(runKm: number, runTime: number, bikeKm: number, bikeTime: number, swimKm: number, swimTime: number): number {
+    let points = 0;
+
+    points += runKm * 10;
+    points += bikeKm * 5;
+    points += swimKm * 15;
+
+    if (runTime <= 30 * 60) {
+        points += 20;
+    }
+
+    if (swimTime <= 20 * 60) {
+        points += 30;
+    }
+
+    if (bikeTime <= 60 * 60) {
+        points += 10;
+    }
+
+    return points;
+}
+

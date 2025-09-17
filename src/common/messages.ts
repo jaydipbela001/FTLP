@@ -68,6 +68,7 @@ export const Messages = {
         CREATE_SUCCESS: "Event created successfully.",
         CREATE_TITLE_EXISTS: "Event title already exists.",
         CREATE_STARTTIME_INVALID: "Event start time must be in the future.",
+        CREATE_STARTDATE_INVALID: "Event start dtae must be in the future.",
         FETCH_SUCCESS: "Event playerli information received successfully.",
         FETCH_LIST_SUCCESS: "Events received successfully.",
         NOT_FOUND: "Event not found.",

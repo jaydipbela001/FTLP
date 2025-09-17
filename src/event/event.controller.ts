@@ -30,7 +30,7 @@ export class EventController {
     @Query('filter') filter?: string,
   ) {
     const pageNumber = +(page ?? 1);
-    const limitNumber = +(limit ?? 10);
+    const limitNumber = +(limit ?? 50);
     const filterString = filter ?? "";
     return this.eventService.findAll(pageNumber, limitNumber, filterString);
   }

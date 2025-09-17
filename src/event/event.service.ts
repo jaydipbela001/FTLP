@@ -4,7 +4,6 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model, Types } from 'mongoose';
 import { EventDocument } from './entities/event.entity';
-import { dateToMilliseconds, timeToseconds } from 'src/common/utils';
 import { AddPlayerDto } from './dto/add-player.dto';
 import { Player, PlayerDocument } from 'src/players/entities/player.entity';
 import { Messages } from 'src/common/messages';
@@ -24,29 +23,24 @@ export class EventService {
         throw new BadGatewayException(Messages.EVENT.CREATE_TITLE_EXISTS);
       }
 
-      const startDate = dateToMilliseconds(createEventDto.startdate);
-      const runtime = timeToseconds(createEventDto.runtime);
-      const biketime = timeToseconds(createEventDto.biketime);
-      const swimtime = timeToseconds(createEventDto.swimtime);
       const now = Date.now();
+
+      if (createEventDto.startdate <= now) {
+        throw new BadRequestException(Messages.EVENT.CREATE_STARTDATE_INVALID);
+      }
 
       if (createEventDto.starttime <= now) {
         throw new BadRequestException(Messages.EVENT.CREATE_STARTTIME_INVALID);
       }
 
-      const event = await this.eventModel.create({
-        ...createEventDto,
-        startdate: startDate,
-        runtime,
-        biketime,
-        swimtime
-      });
+      const event = await this.eventModel.create(createEventDto);
 
       return {
         HttpStatus: HttpStatus.CREATED,
         message: Messages.EVENT.CREATE_SUCCESS,
         data: event,
       };
+
     } catch (error) {
       throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
     }
@@ -79,6 +73,7 @@ export class EventService {
           $group: {
             _id: "$_id",
             title: { $first: "$title" },
+            description: { $first: "$description" },
             location: { $first: "$location" },
             startdate: { $first: "$startdate" },
             starttime: { $first: "$starttime" },
@@ -153,7 +148,7 @@ export class EventService {
   async addPlayer(eventId: string, addPlayerDto: AddPlayerDto) {
     try {
       if (!isValidObjectId(eventId)) {
-        throw new BadRequestException(Messages.EVENT.NOT_FOUND);
+        throw new BadRequestException(Messages.EVENT.INVALID_ID);
       }
 
       const event = await this.eventModel.findById(eventId);
